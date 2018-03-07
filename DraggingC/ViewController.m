@@ -15,6 +15,7 @@ static NSString * const reuseIdentifier = @"Cell";
     [super viewDidLoad];
     
     _tagsData = [[NSMutableArray alloc] initWithObjects:@"StringOne", @"StringTwo", @"StringThree", nil];
+    _choosedTagsData = [[NSMutableArray alloc] init];
     
     self.backgroundView.dragable = NO;
     self.collectionViewBottom.receivable = YES;
@@ -58,10 +59,21 @@ static NSString * const reuseIdentifier = @"Cell";
     
     UIView *currentViewGlobal = sender.view;
     CGPoint touchPointGlobal = [sender locationInView:currentViewGlobal];
+    UILabel *temp;
+    NSString *draggingKey;
+    CGPoint tp;
+    NSIndexPath *path;
+    static int index;
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
             dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
+            
+            temp = (UILabel *)[[dragingView.subviews objectAtIndex:0].subviews objectAtIndex:0];
+            draggingKey = temp.text;
+            path = [self.collectionViewTop indexPathForItemAtPoint:[currentViewGlobal convertPoint:touchPointGlobal toView:self.collectionViewTop]];
+            index = path.item;
+            
             if ([self isPoint:touchPointGlobal fromView:currentViewGlobal isInsideView:dragingView] && dragingView.isDragable) {
                 if (!self.fieldView) {
                     [self createFieldViewOnTopOf:currentViewGlobal];
@@ -92,6 +104,11 @@ static NSString * const reuseIdentifier = @"Cell";
                 UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
                 
                 if (receiverView) {
+                    [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
+                    [self.tagsData removeObjectAtIndex:index];
+                    [self.collectionViewTop reloadData];
+                    [self printData];
+                    
                     CGPoint newCenter = [currentViewGlobal convertPoint:touchPointGlobal toView:receiverView];
                     CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
                     dragingView.center = newCenterWithDelta;
@@ -147,6 +164,10 @@ static NSString * const reuseIdentifier = @"Cell";
         }
     }
     return nil;
+}
+
+- (void)printData {
+    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
 }
 
 @end
