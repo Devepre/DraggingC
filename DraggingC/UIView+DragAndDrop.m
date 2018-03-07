@@ -2,6 +2,7 @@
 #import <objc/runtime.h>
 
 static void * DragAndDropDragablePropertyKey = &DragAndDropDragablePropertyKey;
+static void * DragAndDropReceivablePropertyKey = &DragAndDropReceivablePropertyKey;
 static void * DragAndDropSuperViewPropertyKey = &DragAndDropSuperViewPropertyKey;
 
 @implementation UIView (DragAndDrop)
@@ -13,6 +14,16 @@ static void * DragAndDropSuperViewPropertyKey = &DragAndDropSuperViewPropertyKey
 
 - (BOOL)isDragable {
     NSNumber *value = objc_getAssociatedObject(self, DragAndDropDragablePropertyKey);
+    return [value boolValue];
+}
+
+- (void)setReceivable:(BOOL)receivable {
+    NSNumber *value = [NSNumber numberWithBool:receivable];
+    objc_setAssociatedObject(self, DragAndDropReceivablePropertyKey, value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (BOOL)isReceivable {
+    NSNumber *value = objc_getAssociatedObject(self, DragAndDropReceivablePropertyKey);
     return [value boolValue];
 }
 
