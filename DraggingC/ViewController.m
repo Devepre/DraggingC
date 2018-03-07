@@ -120,14 +120,14 @@ static NSString * const reuseIdentifier = @"Cell";
     
 }
 
+#pragma mark - Additional methods
+
 - (BOOL)isPoint: (CGPoint)point fromView: (UIView *)superVeiw isInsideView:(UIView *)view {
     CGPoint insideViewPoint = [superVeiw convertPoint:point toView:view];
     BOOL result = [view pointInside:insideViewPoint withEvent:nil];
     
     return result;
 }
-
-#pragma mark - Additional methods
 
 - (void)createFieldViewOnTopOf:(UIView *)currentView {
     self.fieldView = [[UIView alloc] initWithFrame:currentView.frame];
@@ -138,11 +138,9 @@ static NSString * const reuseIdentifier = @"Cell";
 
 - (UIView *)findViewForPoint: (CGPoint)point inView: (UIView *)sourceView dragble: (BOOL)dragable receivable: (BOOL)receivable {
     for(UIView *subview in [sourceView allSubViews]) {
-//        printf("%s\n", [[[subview class] description] UTF8String]);
         if ([self isPoint:point fromView:sourceView isInsideView:subview]
             && (subview.dragable == dragable)
             && subview.receivable == receivable) {
-//            printf("FOUND!\n");
             return subview;
         }
     }
