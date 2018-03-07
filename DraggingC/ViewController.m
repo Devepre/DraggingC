@@ -61,10 +61,8 @@ static NSString * const reuseIdentifier = @"Cell";
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
-            printf("INISDE\n");
             dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
             if ([self isPoint:touchPointGlobal fromView:currentViewGlobal isInsideView:dragingView] && dragingView.isDragable) {
-                printf("TOUCH BEGAN\n");
                 if (!self.fieldView) {
                     [self createFieldViewOnTopOf:currentViewGlobal];
                 }
@@ -102,6 +100,10 @@ static NSString * const reuseIdentifier = @"Cell";
                     [UIView animateWithDuration:0.3f animations:^{ dragingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                 } else {
                     [superViewForDraging addSubview:dragingView];
+
+                    CGPoint newCenter = [currentViewGlobal convertPoint:touchPointGlobal toView:superViewForDraging];
+                    CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
+                    dragingView.center = newCenterWithDelta;
                     
                     [UIView animateWithDuration:0.3f animations:^{ dragingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                     [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ dragingView.center = initialDraggingViewCenter; } completion:nil];
