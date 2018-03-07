@@ -14,7 +14,7 @@ static NSString * const reuseIdentifier = @"Cell";
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _tagsData = [[NSMutableArray alloc] initWithObjects:@"StrinOne", @"StringTwo", @"StringThree", nil];
+    _tagsData = [[NSMutableArray alloc] initWithObjects:@"StringOne", @"StringTwo", @"StringThree", nil];
     
     self.backgroundView.dragable = NO;
     self.collectionViewBottom.receivable = YES;
@@ -42,7 +42,6 @@ static NSString * const reuseIdentifier = @"Cell";
     return cell;
 }
 
-
 #pragma mark - Touches & Gestures
 - (void)attachGesturesToView:(UIView *)view {
     UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
@@ -52,63 +51,60 @@ static NSString * const reuseIdentifier = @"Cell";
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)sender {
-    static UIView *draggingView;
+    static UIView *dragingView;
     static CGPoint initialDraggingViewCenter;
-    static UIView *superViewForDragging;
-    static CGPoint deltaPoint;
+    static UIView *superViewForDraging;
+    static CGPoint deltaVector;
     
-    UIView *currentView = sender.view;
-    CGPoint touchPoint = [sender locationInView:currentView];
-//    printf("touchPoint: %f, %f\n", touchPoint.x, touchPoint.y);
-    
-//    draggingView = [self findViewForPoint:touchPoint inView:currentView dragble:YES receivable:NO];
+    UIView *currentViewGlobal = sender.view;
+    CGPoint touchPointGlobal = [sender locationInView:currentViewGlobal];
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
             printf("INISDE\n");
-            draggingView = [self findViewForPoint:touchPoint inView:currentView dragble:YES receivable:NO];
-            if ([self isPoint:touchPoint fromView:currentView isInsideView:draggingView] && draggingView.isDragable) {
+            dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
+            if ([self isPoint:touchPointGlobal fromView:currentViewGlobal isInsideView:dragingView] && dragingView.isDragable) {
                 printf("TOUCH BEGAN\n");
                 if (!self.fieldView) {
-                    self.fieldView = [[UIView alloc] initWithFrame:currentView.frame];
-                    UIColor *transparentColor = [UIColor colorWithWhite:1.f alpha:0.f];
-                    [self.fieldView setBackgroundColor:transparentColor];
-                    [currentView addSubview:self.fieldView];
+                    [self createFieldViewOnTopOf:currentViewGlobal];
                 }
                 
-                superViewForDragging = draggingView.superview;
-                initialDraggingViewCenter = draggingView.center;
+                superViewForDraging = dragingView.superview;
+                initialDraggingViewCenter = dragingView.center;
                 
-                CGPoint pointInDrag = [currentView convertPoint:touchPoint toView:draggingView];
-                deltaPoint = CGPointMake(CGRectGetMidX(draggingView.bounds) - pointInDrag.x,
-                                         CGRectGetMidY(draggingView.bounds) - pointInDrag.y);
+                CGPoint touchPointInDragingView = [currentViewGlobal convertPoint:touchPointGlobal toView:dragingView];
+                deltaVector = CGPointMake(CGRectGetMidX(dragingView.bounds) - touchPointInDragingView.x,
+                                         CGRectGetMidY(dragingView.bounds) - touchPointInDragingView.y);
                 
-                [draggingView removeFromSuperview];
-                draggingView.center = CGPointMake(touchPoint.x + deltaPoint.x, touchPoint.y + deltaPoint.y);
-                [self.fieldView addSubview:draggingView];
+                [dragingView removeFromSuperview];
+                dragingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
+                [self.fieldView addSubview:dragingView];
                 
-                [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.2f, 1.2f);}];
+                [UIView animateWithDuration:0.3f animations:^{ dragingView.transform = CGAffineTransformMakeScale(1.2f, 1.2f);}];
             }
             break;
         case UIGestureRecognizerStateChanged:
-            printf("changed\n");
-            if (draggingView && draggingView.dragable) {
-                draggingView.center = CGPointMake(touchPoint.x + deltaPoint.x, touchPoint.y + deltaPoint.y);
+            if (dragingView && dragingView.dragable) {
+                dragingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
             }
             break;
         case UIGestureRecognizerStateEnded:
             if (self.fieldView) {
-                [draggingView removeFromSuperview];
-                UIView *receiverView = [self findViewForPoint:touchPoint inView:currentView dragble:NO receivable:YES];
+                [dragingView removeFromSuperview];
+                UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
                 
                 if (receiverView) {
-                    CGPoint newCenter = [currentView convertPoint:touchPoint toView:receiverView];
-                    draggingView.center = newCenter;
-                    [receiverView addSubview:draggingView];
+                    CGPoint newCenter = [currentViewGlobal convertPoint:touchPointGlobal toView:receiverView];
+                    CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
+                    dragingView.center = newCenterWithDelta;
+                    [receiverView addSubview:dragingView];
                     
-                    [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
+                    [UIView animateWithDuration:0.3f animations:^{ dragingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                 } else {
-                    goto cancel; // LOL
+                    [superViewForDraging addSubview:dragingView];
+                    
+                    [UIView animateWithDuration:0.3f animations:^{ dragingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
+                    [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ dragingView.center = initialDraggingViewCenter; } completion:nil];
                 }
                 
                 [self.fieldView removeFromSuperview];
@@ -116,14 +112,7 @@ static NSString * const reuseIdentifier = @"Cell";
             }
             break;
         case UIGestureRecognizerStateCancelled:
-        cancel:
-            printf("Gesture cancelled\n");
-            
-            [superViewForDragging addSubview:draggingView];
-            NSLog(@"superview tag: %ld", [superViewForDragging tag]);
-            
-            [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
-            [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ draggingView.center = initialDraggingViewCenter; } completion:nil];
+            printf("LOL never LOL\n");
             break;
         default:
             break;
@@ -136,6 +125,15 @@ static NSString * const reuseIdentifier = @"Cell";
     BOOL result = [view pointInside:insideViewPoint withEvent:nil];
     
     return result;
+}
+
+#pragma mark - Additional methods
+
+- (void)createFieldViewOnTopOf:(UIView *)currentView {
+    self.fieldView = [[UIView alloc] initWithFrame:currentView.frame];
+    UIColor *transparentColor = [UIColor colorWithWhite:1.f alpha:0.f];
+    [self.fieldView setBackgroundColor:transparentColor];
+    [currentView addSubview:self.fieldView];
 }
 
 - (UIView *)findViewForPoint: (CGPoint)point inView: (UIView *)sourceView dragble: (BOOL)dragable receivable: (BOOL)receivable {
