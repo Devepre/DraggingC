@@ -3,7 +3,6 @@
 
 static void * DragAndDropDragablePropertyKey = &DragAndDropDragablePropertyKey;
 static void * DragAndDropReceivablePropertyKey = &DragAndDropReceivablePropertyKey;
-static void * DragAndDropSuperViewPropertyKey = &DragAndDropSuperViewPropertyKey;
 
 @implementation UIView (DragAndDrop)
 
@@ -25,14 +24,6 @@ static void * DragAndDropSuperViewPropertyKey = &DragAndDropSuperViewPropertyKey
 - (BOOL)isReceivable {
     NSNumber *value = objc_getAssociatedObject(self, DragAndDropReceivablePropertyKey);
     return [value boolValue];
-}
-
-- (void)setSuperView:(UIView *)superView {
-    objc_setAssociatedObject(self, DragAndDropSuperViewPropertyKey, superView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (UIView *)superView {
-    return objc_getAssociatedObject(self, DragAndDropSuperViewPropertyKey);
 }
 
 - (NSMutableArray*)allSubViews {
