@@ -10,14 +10,16 @@
 @implementation ViewController
 
 static NSString * const reuseIdentifier = @"Cell";
+static NSString * const reuseIdentifier2 = @"CellCollected";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
     _tagsData = [[NSMutableArray alloc] initWithObjects:@"StringOne", @"StringTwo", @"StringThree", nil];
-    _choosedTagsData = [[NSMutableArray alloc] init];
+    _choosedTagsData = [[NSMutableArray alloc] initWithObjects:@"bla-blah", @"anotherOne", nil];
     
     self.backgroundView.dragable = NO;
+    self.collectionViewTop.receivable = YES;
     self.collectionViewBottom.receivable = YES;
     [self attachGesturesToView:self.backgroundView];
 }
@@ -29,16 +31,41 @@ static NSString * const reuseIdentifier = @"Cell";
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return self.tagsData.count;
+    switch (collectionView.tag) {
+        case 101:
+            return self.tagsData.count;
+            break;
+            
+        case 102:
+            return self.choosedTagsData.count;
+            break;
+        default:
+            break;
+    }
+    return 0;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewCell *cell =  [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
-    
-    UILabel *recipeView = (UILabel *)[cell viewWithTag:145];
-    recipeView.text = [self.tagsData objectAtIndex:indexPath.row];
-    
-    cell.dragable = YES;
+    UICollectionViewCell *cell;
+    UILabel *recipeView;
+    switch (collectionView.tag) {
+        case 101:
+            cell =  [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier forIndexPath:indexPath];
+            cell.dragable = YES;
+            
+            recipeView = (UILabel *)[cell viewWithTag:145];
+            recipeView.text = [self.tagsData objectAtIndex:indexPath.row];
+            break;
+        case 102:
+            cell =  [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier2 forIndexPath:indexPath];
+            cell.dragable = YES;
+            
+            recipeView = (UILabel *)[cell viewWithTag:146];
+            recipeView.text = [self.choosedTagsData objectAtIndex:indexPath.row];
+            break;
+        default:
+            break;
+    }
     
     return cell;
 }
@@ -58,21 +85,19 @@ static NSString * const reuseIdentifier = @"Cell";
     static CGPoint deltaVector;
     
     UIView *currentViewGlobal = sender.view;
-    CGPoint touchPointGlobal = [sender locationInView:currentViewGlobal];
-    UILabel *temp;
-    NSString *draggingKey;
-    CGPoint tp;
+    CGPoint touchPointGlobal = [sender locationInView:currentViewGlobal];;
     NSIndexPath *path;
     static int index;
+    static UIView *parentContainerView;
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
             dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
+            parentContainerView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
             
-            temp = (UILabel *)[[dragingView.subviews objectAtIndex:0].subviews objectAtIndex:0];
-            draggingKey = temp.text;
-            path = [self.collectionViewTop indexPathForItemAtPoint:[currentViewGlobal convertPoint:touchPointGlobal toView:self.collectionViewTop]];
+            path = [(UICollectionView *)parentContainerView indexPathForItemAtPoint:[currentViewGlobal convertPoint:touchPointGlobal toView:(UICollectionView *)parentContainerView]];
             index = path.item;
+            printf("index = %d\n", index);
             
             if ([self isPoint:touchPointGlobal fromView:currentViewGlobal isInsideView:dragingView] && dragingView.isDragable) {
                 if (!self.fieldView) {
@@ -103,10 +128,17 @@ static NSString * const reuseIdentifier = @"Cell";
                 [dragingView removeFromSuperview];
                 UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
                 
-                if (receiverView) {
-                    [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
-                    [self.tagsData removeObjectAtIndex:index];
+                if (receiverView && receiverView != parentContainerView) {
+                    if (receiverView.tag == 102) {
+                        [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
+                        [self.tagsData removeObjectAtIndex:index];
+                    } else {
+                        [self.tagsData addObject:[self.choosedTagsData objectAtIndex:index]];
+                        [self.choosedTagsData removeObjectAtIndex:index];
+                    }
+                    
                     [self.collectionViewTop reloadData];
+                    [self.collectionViewBottom reloadData];
                     [self printData];
                     
                     CGPoint newCenter = [currentViewGlobal convertPoint:touchPointGlobal toView:receiverView];
