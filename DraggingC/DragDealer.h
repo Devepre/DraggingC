@@ -13,6 +13,11 @@
 - (void) dragBeganFromView: (UICollectionView *)view
                atIndexPath: (NSIndexPath *)path;
 
+- (void) draggedFromCollectionView: (UICollectionView *)fromView
+                       atIndexPath: (NSIndexPath *)indexFrom
+                  toCollectionView: (UICollectionView *)toView
+                       atIndexPath: (NSIndexPath *)indexTo;
+
 @end
 
 @interface DragDealer : NSObject <UIGestureRecognizerDelegate>

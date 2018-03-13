@@ -29,7 +29,7 @@
         _delegate = delegate;
         
         //gesture creation
-        UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:_baseView action:@selector(handlePan:)];
+        UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
         panGesture.delegate = self;
         [_baseView addGestureRecognizer:panGesture];
         
@@ -42,71 +42,69 @@
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)sender {
-    UIView *draggingView = self.draggingView;
-    UIView *baseView = self.baseView;
-    UICollectionView *draggingFromCollectionView = self.draggingFromCollectionView;
-    NSIndexPath *draggingFromContainerIndexPath = self.draggingFromContainerIndexPath;
-    
     // old
     static CGPoint initialDraggingViewCenter;
     static CGPoint deltaVector;
     
-    CGPoint touchPointGlobal = [sender locationInView:baseView];
+    CGPoint touchPointGlobal = [sender locationInView:self.baseView];
 //    static int indexInBottom;
     static BOOL gotToReceiver;
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
-            if (!draggingView) {
+            if (!self.draggingView) {
                 printf("NEW DRAGGING VIEW\n");
 
-                draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
-                CGPoint draggingPoint = [baseView convertPoint:touchPointGlobal toView:draggingFromCollectionView];
-                draggingFromContainerIndexPath = [draggingFromCollectionView indexPathForItemAtPoint:draggingPoint];
-                draggingView = [draggingFromCollectionView cellForItemAtIndexPath:draggingFromContainerIndexPath];
+                self.draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
+                CGPoint draggingPoint = [self.baseView convertPoint:touchPointGlobal toView:self.draggingFromCollectionView];
+                self.draggingFromContainerIndexPath = [self.draggingFromCollectionView indexPathForItemAtPoint:draggingPoint];
+                self.draggingView = [self.draggingFromCollectionView cellForItemAtIndexPath:self.draggingFromContainerIndexPath];
+                self.self.draggingView = self.draggingView;
             }
             
-            if (draggingView) {
+            if (self.draggingView) {
+                printf("began dragging view\n");
                 if (!self.fieldView) {
-                    [self createFieldViewOnTopOf:baseView];
+                    [self createFieldViewOnTopOf:self.baseView];
                 }
                 
-                initialDraggingViewCenter = draggingView.center;
+                initialDraggingViewCenter = self.draggingView.center;
                 
-                CGPoint touchPointInDragingView = [baseView convertPoint:touchPointGlobal toView:draggingView];
-                deltaVector = CGPointMake(CGRectGetMidX(draggingView.bounds) - touchPointInDragingView.x,
-                                          CGRectGetMidY(draggingView.bounds) - touchPointInDragingView.y);
+                CGPoint touchPointInDragingView = [self.baseView convertPoint:touchPointGlobal toView:self.draggingView];
+                deltaVector = CGPointMake(CGRectGetMidX(self.draggingView.bounds) - touchPointInDragingView.x,
+                                          CGRectGetMidY(self.draggingView.bounds) - touchPointInDragingView.y);
                 
                 //remove from Source CollectionView
-                [draggingView removeFromSuperview];
+                [self.draggingView removeFromSuperview];
                 
                 //delegate methods to handle datasource
                 if (self.delegate && [self.delegate respondsToSelector:@selector(canDragItemAtIndexPath:fromView:)]) {
-                    BOOL canDrag = [self.delegate canDragItemAtIndexPath:draggingFromContainerIndexPath
-                                                                fromView:draggingFromCollectionView];
+                    BOOL canDrag = [self.delegate canDragItemAtIndexPath:self.draggingFromContainerIndexPath
+                                                                fromView:self.draggingFromCollectionView];
                     if (canDrag) {
                         if ([self.delegate respondsToSelector:@selector(dragBeganFromView:atIndexPath:)]) {
-                            [self.delegate dragBeganFromView:draggingFromCollectionView
-                                                 atIndexPath:draggingFromContainerIndexPath];
+                            [self.delegate dragBeganFromView:self.draggingFromCollectionView
+                                                 atIndexPath:self.draggingFromContainerIndexPath];
                         }
                     }
                 }
                 
                 //adding to temp field
-                draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
-                [self.fieldView addSubview:draggingView];
+                self.draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
+                [self.fieldView addSubview:self.draggingView];
                 
                 //animation
-                [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.2f, 1.2f);}];
+                [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.2f, 1.2f);}];
             }
             break;
         case UIGestureRecognizerStateChanged:
-            if (draggingView) {
+            if (self.draggingView) {
+                printf("dragging view\n");
                 //moving object itself
-                draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
+                self.draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
                 
-                UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:draggingView.center];
-                BOOL isInOtherCollection = draggingFromCollectionView != currentCollectionReceiver;
+                UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
+                BOOL isInOtherCollection = self.draggingFromCollectionView != currentCollectionReceiver;
                 
                 if (isInOtherCollection) {
                     CGPoint pointInReceiver = [sender locationInView:currentCollectionReceiver];
@@ -114,7 +112,7 @@
                     if (overridingIndexPath) {
                         NSInteger indexInReceiver = overridingIndexPath.row;
                         printf("will add to %ld", indexInReceiver);
-                        //TODO data amd View update
+                        //TODO data and View update
                     }
                 }
                 
@@ -140,14 +138,62 @@
             }
             break;
         case UIGestureRecognizerStateEnded:
-            gotToReceiver = NO;
-            [self.destinationView endInteractiveMovement];
+        case UIGestureRecognizerStateCancelled:
+        case UIGestureRecognizerStateFailed:
+            //TODO  View animation update
+            /*gotToReceiver = NO;
+            [self.destinationView endInteractiveMovement];*/
             
             if (self.fieldView) {
-                [draggingView removeFromSuperview];
-                UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:baseView dragble:NO receivable:YES];
+                [self.draggingView removeFromSuperview];
                 
-                if (receiverView && receiverView != draggingFromCollectionView) {
+//                UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:baseView dragble:NO receivable:YES];
+                UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
+                
+                if (currentCollectionReceiver) {
+                    if (currentCollectionReceiver != self.draggingFromCollectionView) {
+                        CGPoint pointInReceiver = [sender locationInView:currentCollectionReceiver];
+                        NSIndexPath *currentReceiverIndexPath = [currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
+                        if (self.delegate && [self.delegate respondsToSelector:@selector(draggedFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) {
+                            [self.delegate draggedFromCollectionView:self.draggingFromCollectionView
+                                                         atIndexPath:self.draggingFromContainerIndexPath
+                                                    toCollectionView:currentCollectionReceiver
+                                                         atIndexPath:currentReceiverIndexPath];
+                            [self.sourceView reloadData];
+                            [self.destinationView reloadData];
+                            [self printData]; //logging
+                            
+                            //adding CellView to Receiver
+                            CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
+                            CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
+                            self.draggingView.center = newCenterWithDelta;
+                            [currentCollectionReceiver addSubview:self.draggingView];
+                            
+                            //animation
+                            [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
+                        }
+                    } else { //ReceiverView == SenderView
+                        [self.draggingFromCollectionView addSubview:self.draggingView];
+                        
+                        //adding CellView back to Sender
+                        CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:self.draggingFromCollectionView];
+                        CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
+                        self.draggingView.center = newCenterWithDelta;
+                        
+                        //animation
+                        [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
+                        [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ self.draggingView.center = initialDraggingViewCenter; } completion:nil];
+                    }
+                }
+                
+                //deallocating
+                self.draggingView = nil;
+                [self.fieldView removeFromSuperview];
+                self.fieldView = nil;
+                
+               
+                /*
+                if (currentCollectionReceiver && currentCollectionReceiver != draggingFromCollectionView) {
                     if (receiverView.tag == 102) {
                         //                        [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
                         [self.tagsData removeObjectAtIndex:index];
@@ -160,10 +206,10 @@
                     [self.destinationView reloadData];
                     [self printData];
                     
-                    CGPoint newCenter = [baseView convertPoint:touchPointGlobal toView:receiverView];
+                    CGPoint newCenter = [baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
                     CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
                     draggingView.center = newCenterWithDelta;
-                    [receiverView addSubview:draggingView];
+                    [currentCollectionReceiver addSubview:draggingView];
                     
                     [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                 } else {
@@ -177,14 +223,11 @@
                     [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ draggingView.center = initialDraggingViewCenter; } completion:nil];
                 }
                 
-                [self.fieldView removeFromSuperview];
-                self.fieldView = nil;
+                //deallocating
                 draggingView = nil;
+                [self.fieldView removeFromSuperview];
+                self.fieldView = nil;*/
             }
-            break;
-        case UIGestureRecognizerStateCancelled:
-            printf("LOL never LOL\n");
-            draggingView = nil;
             break;
         default:
             break;
@@ -192,21 +235,31 @@
     
 }
 
+
 #pragma mark - Data Source Handling
-- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath{
-    NSLog(@"\nchanged \n%@", self.choosedTagsData);
-    NSLog(@"Source: %@ Destination: %@", sourceIndexPath, destinationIndexPath);
-    
-    NSLog(@"\nchanged \n%@", self.choosedTagsData);
-    [self.destinationView reloadData];
-    
-}
+////TODO reordering data logic is here
+//- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
+//    NSLog(@"\nchanged \n%@", self.choosedTagsData);
+//    NSLog(@"Source: %@ Destination: %@", sourceIndexPath, destinationIndexPath);
+//
+//    NSLog(@"\nchanged \n%@", self.choosedTagsData);
+//    [self.destinationView reloadData];
+//
+//}
 
 #pragma mark - Additional methods
 
-- (BOOL)isPoint: (CGPoint)point fromView: (UIView *)superVeiw isInsideView:(UIView *)view {
-    CGPoint insideViewPoint = [superVeiw convertPoint:point toView:view];
-    BOOL result = [view pointInside:insideViewPoint withEvent:nil];
+- (UICollectionView *)getDraggedCollectionViewFromBasePoint: (CGPoint)point {
+    UICollectionView * result = nil;
+    
+    CGPoint pointInSource = [self.baseView convertPoint:point toView:self.sourceView];
+    CGPoint pointInDestination = [self.baseView convertPoint:point toView:self.destinationView];
+    
+    if ([self.sourceView pointInside:pointInSource withEvent:nil]) {
+        result = self.sourceView;
+    } else if ([self.destinationView pointInside:pointInDestination withEvent:nil]) {
+        result = self.destinationView;
+    }
     
     return result;
 }
@@ -218,7 +271,19 @@
     [currentView addSubview:self.fieldView];
 }
 
+- (void)printData {
+    NSLog(@"TODO printing data here...");
+//    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
+}
 
+/*
+ - (BOOL)isPoint: (CGPoint)point fromView: (UIView *)superVeiw isInsideView:(UIView *)view {
+ CGPoint insideViewPoint = [superVeiw convertPoint:point toView:view];
+ BOOL result = [view pointInside:insideViewPoint withEvent:nil];
+ 
+ return result;
+ }
+ 
 - (UIView *)findViewForPoint: (CGPoint)point inView: (UIView *)sourceView dragble: (BOOL)dragable receivable: (BOOL)receivable {
     for (UIView *subview in [self allSubViewsInView:sourceView]) {
         if ([self isPoint:point fromView:sourceView isInsideView:subview]
@@ -237,25 +302,6 @@
         [arr addObjectsFromArray:(NSArray *)[self allSubViewsInView: subview]];
     }
     return arr;
-}
-
-- (void)printData {
-//    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
-}
-
-- (UICollectionView *)getDraggedCollectionViewFromBasePoint: (CGPoint)point {
-    UICollectionView * result = nil;
-    
-    CGPoint pointInSource = [self.baseView convertPoint:point toView:self.sourceView];
-    CGPoint pointInDestination = [self.baseView convertPoint:point toView:self.destinationView];
-    
-    if ([self.sourceView pointInside:pointInSource withEvent:nil]) {
-        result = self.sourceView;
-    } else if ([self.destinationView pointInside:pointInDestination withEvent:nil]) {
-        result = self.destinationView;
-    }
-    
-    return result;
-}
+} */
 
 @end
