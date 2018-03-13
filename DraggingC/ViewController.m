@@ -88,11 +88,17 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
     CGPoint touchPointGlobal = [sender locationInView:currentViewGlobal];;
     NSIndexPath *path;
     static int index;
+    static int indexInBottom;
+    static BOOL gotToReceiver;
     static UIView *parentContainerView;
     
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
-            dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
+            if (!dragingView) {
+                printf("NEW DRAGGING VIEW\n");
+                dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
+            }
+//            dragingView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:YES receivable:NO];
             parentContainerView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
             
             path = [(UICollectionView *)parentContainerView indexPathForItemAtPoint:[currentViewGlobal convertPoint:touchPointGlobal toView:(UICollectionView *)parentContainerView]];
@@ -121,16 +127,40 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
         case UIGestureRecognizerStateChanged:
             if (dragingView && dragingView.dragable) {
                 dragingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
+                
+                if ([self isPoint:dragingView.center fromView:currentViewGlobal isInsideView:self.collectionViewBottom]) {
+//                    NSLog(@"__________");
+                    
+                    NSIndexPath *selectedIndexPath = [self.collectionViewBottom indexPathForItemAtPoint:[sender locationInView:self.collectionViewBottom]];
+                    if(selectedIndexPath) {
+                        printf("inside bottom and index = %ld\n", (long)selectedIndexPath.row);
+                        indexInBottom = (int)selectedIndexPath.row;
+                        if (!gotToReceiver) {
+                            gotToReceiver = YES;
+                            
+                            printf("GOT TO RECEIVER\n");
+                            [self.choosedTagsData insertObject:[self.tagsData objectAtIndex:index] atIndex:indexInBottom];
+                            [self.collectionViewBottom insertItemsAtIndexPaths:@[selectedIndexPath]];
+//                            [self.collectionViewBottom reloadData];
+
+                            [self.collectionViewBottom beginInteractiveMovementForItemAtIndexPath:selectedIndexPath];
+                        }
+                    }
+                }
+                [self.collectionViewBottom updateInteractiveMovementTargetPosition:[sender locationInView:self.collectionViewBottom]];
             }
             break;
         case UIGestureRecognizerStateEnded:
+            gotToReceiver = NO;
+            [self.collectionViewBottom endInteractiveMovement];
+            
             if (self.fieldView) {
                 [dragingView removeFromSuperview];
                 UIView *receiverView = [self findViewForPoint:touchPointGlobal inView:currentViewGlobal dragble:NO receivable:YES];
                 
                 if (receiverView && receiverView != parentContainerView) {
                     if (receiverView.tag == 102) {
-                        [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
+//                        [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
                         [self.tagsData removeObjectAtIndex:index];
                     } else {
                         [self.tagsData addObject:[self.choosedTagsData objectAtIndex:index]];
@@ -160,6 +190,7 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
                 
                 [self.fieldView removeFromSuperview];
                 self.fieldView = nil;
+                dragingView = nil;
             }
             break;
         case UIGestureRecognizerStateCancelled:
@@ -168,6 +199,22 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
         default:
             break;
     }
+    
+}
+
+- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath{
+    NSLog(@"\nchanged \n%@", self.choosedTagsData);
+    NSLog(@"Source: %@ Destination: %@", sourceIndexPath, destinationIndexPath);
+    
+    //    NSString *temp = [self.choosedTagsData objectAtIndex:sourceIndexPath.row];
+    //    [self.choosedTagsData objectAtIndex:sourceIndexPath.row];
+//    [self.choosedTagsData exchangeObjectAtIndex:sourceIndexPath.row withObjectAtIndex:destinationIndexPath.row];
+    NSLog(@"\nchanged \n%@", self.choosedTagsData);
+    [self.collectionViewBottom reloadData];
+    
+    //add your data source manipulation logic here
+    //specifically, change the order of entries in the data source to match the new visual order of the cells.
+    //even without anything inside this function, the cells will move visually if you build and run
     
 }
 
