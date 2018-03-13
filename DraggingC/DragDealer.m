@@ -52,7 +52,7 @@
     static CGPoint deltaVector;
     
     CGPoint touchPointGlobal = [sender locationInView:baseView];
-    static int indexInBottom;
+//    static int indexInBottom;
     static BOOL gotToReceiver;
     
     switch (sender.state) {
@@ -60,7 +60,7 @@
             if (!draggingView) {
                 printf("NEW DRAGGING VIEW\n");
 
-                draggingFromCollectionView = [self getDraggedCollectionViewFromPoint:touchPointGlobal];
+                draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
                 CGPoint draggingPoint = [baseView convertPoint:touchPointGlobal toView:draggingFromCollectionView];
                 draggingFromContainerIndexPath = [draggingFromCollectionView indexPathForItemAtPoint:draggingPoint];
                 draggingView = [draggingFromCollectionView cellForItemAtIndexPath:draggingFromContainerIndexPath];
@@ -102,11 +102,24 @@
             break;
         case UIGestureRecognizerStateChanged:
             if (draggingView) {
-                //check to comment it
+                //moving object itself
                 draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
                 
+                UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:draggingView.center];
+                BOOL isInOtherCollection = draggingFromCollectionView != currentCollectionReceiver;
+                
+                if (isInOtherCollection) {
+                    CGPoint pointInReceiver = [sender locationInView:currentCollectionReceiver];
+                    NSIndexPath *overridingIndexPath = [currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
+                    if (overridingIndexPath) {
+                        NSInteger indexInReceiver = overridingIndexPath.row;
+                        printf("will add to %ld", indexInReceiver);
+                        //TODO data amd View update
+                    }
+                }
+                
+                /*
                 if ([self isPoint:draggingView.center fromView:baseView isInsideView:self.destinationView]) {
-                    
                     NSIndexPath *selectedIndexPath = [self.destinationView indexPathForItemAtPoint:[sender locationInView:self.destinationView]];
                     if(selectedIndexPath) {
                         printf("inside bottom and index = %ld\n", (long)selectedIndexPath.row);
@@ -123,7 +136,7 @@
                         }
                     }
                 }
-                [self.destinationView updateInteractiveMovementTargetPosition:[sender locationInView:self.destinationView]];
+                [self.destinationView updateInteractiveMovementTargetPosition:[sender locationInView:self.destinationView]];*/
             }
             break;
         case UIGestureRecognizerStateEnded:
@@ -230,7 +243,7 @@
 //    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
 }
 
-- (UICollectionView *)getDraggedCollectionViewFromPoint: (CGPoint)point {
+- (UICollectionView *)getDraggedCollectionViewFromBasePoint: (CGPoint)point {
     UICollectionView * result = nil;
     
     CGPoint pointInSource = [self.baseView convertPoint:point toView:self.sourceView];
