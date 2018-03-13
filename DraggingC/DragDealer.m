@@ -42,7 +42,6 @@
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)sender {
-    // old
     static CGPoint initialDraggingViewCenter;
     static CGPoint deltaVector;
     
@@ -53,8 +52,6 @@
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
             if (!self.draggingView) {
-                printf("NEW DRAGGING VIEW\n");
-
                 self.draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
                 CGPoint draggingPoint = [self.baseView convertPoint:touchPointGlobal toView:self.draggingFromCollectionView];
                 self.draggingFromContainerIndexPath = [self.draggingFromCollectionView indexPathForItemAtPoint:draggingPoint];
@@ -63,7 +60,6 @@
             }
             
             if (self.draggingView) {
-                printf("began dragging view\n");
                 if (!self.fieldView) {
                     [self createFieldViewOnTopOf:self.baseView];
                 }
@@ -99,7 +95,6 @@
             break;
         case UIGestureRecognizerStateChanged:
             if (self.draggingView) {
-                printf("dragging view\n");
                 //moving object itself
                 self.draggingView.center = CGPointMake(touchPointGlobal.x + deltaVector.x, touchPointGlobal.y + deltaVector.y);
                 
@@ -159,74 +154,35 @@
                                                          atIndexPath:self.draggingFromContainerIndexPath
                                                     toCollectionView:currentCollectionReceiver
                                                          atIndexPath:currentReceiverIndexPath];
-                            [self.sourceView reloadData];
-                            [self.destinationView reloadData];
-                            [self printData]; //logging
-                            
-                            //adding CellView to Receiver
-                            CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
-                            CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
-                            self.draggingView.center = newCenterWithDelta;
-                            [currentCollectionReceiver addSubview:self.draggingView];
-                            
-                            //animation
-                            [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                         }
-                    } else { //ReceiverView == SenderView
-                        [self.draggingFromCollectionView addSubview:self.draggingView];
+                        //assume data was changed by delegate
+//                        [self.sourceView reloadData];
+//                        [self.destinationView reloadData];
+                        [self printData]; //logging
                         
-                        //adding CellView back to Sender
-                        CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:self.draggingFromCollectionView];
+                        //adding CellView to Receiver
+                        CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
                         CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
                         self.draggingView.center = newCenterWithDelta;
+                        [currentCollectionReceiver addSubview:self.draggingView];
                         
                         //animation
                         [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
-                        [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ self.draggingView.center = initialDraggingViewCenter; } completion:nil];
+                    } else {
+                        [self undoDraggingFromBasePoint:touchPointGlobal
+                                         withDeltaPoint:deltaVector
+                                   toInitialCenterPoint:initialDraggingViewCenter];
                     }
+                } else { //ReceiverView == SenderView or ReceiverView is not valid
+                    [self undoDraggingFromBasePoint:touchPointGlobal
+                                     withDeltaPoint:deltaVector
+                               toInitialCenterPoint:initialDraggingViewCenter];
                 }
                 
                 //deallocating
                 self.draggingView = nil;
                 [self.fieldView removeFromSuperview];
                 self.fieldView = nil;
-                
-               
-                /*
-                if (currentCollectionReceiver && currentCollectionReceiver != draggingFromCollectionView) {
-                    if (receiverView.tag == 102) {
-                        //                        [self.choosedTagsData addObject:[self.tagsData objectAtIndex:index]];
-                        [self.tagsData removeObjectAtIndex:index];
-                    } else {
-                        [self.tagsData addObject:[self.choosedTagsData objectAtIndex:index]];
-                        [self.choosedTagsData removeObjectAtIndex:index];
-                    }
-                    
-                    [self.sourceView reloadData];
-                    [self.destinationView reloadData];
-                    [self printData];
-                    
-                    CGPoint newCenter = [baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
-                    CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
-                    draggingView.center = newCenterWithDelta;
-                    [currentCollectionReceiver addSubview:draggingView];
-                    
-                    [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
-                } else {
-                    [draggingFromCollectionView addSubview:draggingView];
-                    
-                    CGPoint newCenter = [baseView convertPoint:touchPointGlobal toView:draggingFromCollectionView];
-                    CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
-                    draggingView.center = newCenterWithDelta;
-                    
-                    [UIView animateWithDuration:0.3f animations:^{ draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
-                    [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ draggingView.center = initialDraggingViewCenter; } completion:nil];
-                }
-                
-                //deallocating
-                draggingView = nil;
-                [self.fieldView removeFromSuperview];
-                self.fieldView = nil;*/
             }
             break;
         default:
@@ -271,37 +227,22 @@
     [currentView addSubview:self.fieldView];
 }
 
+- (void)undoDraggingFromBasePoint: (CGPoint)touchPointGlobal withDeltaPoint: (CGPoint)deltaVector toInitialCenterPoint: (CGPoint)initialDraggingViewCenter {
+    [self.draggingFromCollectionView addSubview:self.draggingView];
+    
+    //adding CellView back to Sender
+    CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:self.draggingFromCollectionView];
+    CGPoint newCenterWithDelta = CGPointMake(newCenter.x + deltaVector.x, newCenter.y + deltaVector.y);
+    self.draggingView.center = newCenterWithDelta;
+    
+    //animation
+    [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
+    [UIView animateWithDuration:.3f delay:0 options:UIViewAnimationOptionCurveLinear animations:^{ self.draggingView.center = initialDraggingViewCenter; } completion:nil];
+}
+
 - (void)printData {
     NSLog(@"TODO printing data here...");
 //    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
 }
-
-/*
- - (BOOL)isPoint: (CGPoint)point fromView: (UIView *)superVeiw isInsideView:(UIView *)view {
- CGPoint insideViewPoint = [superVeiw convertPoint:point toView:view];
- BOOL result = [view pointInside:insideViewPoint withEvent:nil];
- 
- return result;
- }
- 
-- (UIView *)findViewForPoint: (CGPoint)point inView: (UIView *)sourceView dragble: (BOOL)dragable receivable: (BOOL)receivable {
-    for (UIView *subview in [self allSubViewsInView:sourceView]) {
-        if ([self isPoint:point fromView:sourceView isInsideView:subview]
-            && (subview.dragable == dragable)
-            && subview.receivable == receivable) {
-            return subview;
-        }
-    }
-    return nil;
-}
-
-- (NSMutableArray*)allSubViewsInView: (UIView *)view {
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
-    [arr addObject:self];
-    for (UIView *subview in view.subviews) {
-        [arr addObjectsFromArray:(NSArray *)[self allSubViewsInView: subview]];
-    }
-    return arr;
-} */
 
 @end
