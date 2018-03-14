@@ -27,6 +27,7 @@
 @property (weak, nonatomic) UICollectionView *destinationView;
 @property (weak, nonatomic) NSObject<DragDealerProtocol> *delegate;
 
+@property (assign, nonatomic, getter=isSacled) BOOL scaled;
 @property (assign, nonatomic, getter=isSourceReceivable) BOOL sourceReceivable;
 @property (assign, nonatomic, getter = isDestinationReceivable) BOOL destinationReceivable;
 
