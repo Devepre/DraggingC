@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
+#import "DragDealer.h"
 
-@interface ViewController : UIViewController <UIGestureRecognizerDelegate>
+@interface ViewController : UIViewController <DragDealerProtocol>
 
 @property (strong, nonatomic) IBOutlet UIView *backgroundView;
 
