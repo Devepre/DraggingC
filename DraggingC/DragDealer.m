@@ -141,7 +141,7 @@
         NSIndexPath *overridingIndexPath = [currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
         if (overridingIndexPath) {
             NSInteger indexInReceiver = overridingIndexPath.row;
-            printf("will add to %ld", indexInReceiver);
+            printf("will add to %ld\n", (long)indexInReceiver);
             //TODO data and View update
         }
     }
@@ -188,9 +188,8 @@
                                                  atIndexPath:currentReceiverIndexPath];
                 }
                 //assume data was changed by delegate
-                //                        [self.sourceView reloadData];
-                //                        [self.destinationView reloadData];
-                [self printData]; //logging
+                [self.sourceView reloadData];
+                [self.destinationView reloadData];
                 
                 [self.draggingView removeFromSuperview];
                 //adding CellView to Receiver
@@ -300,11 +299,6 @@
         #pragma GCC diagnostic ignored "-Wunused-value"
         discardDragProcess;
     }
-}
-
-- (void)printData {
-    NSLog(@"TODO printing data here...");
-//    NSLog(@"\n%@ \n\n%@", self.tagsData, self.choosedTagsData);
 }
 
 @end

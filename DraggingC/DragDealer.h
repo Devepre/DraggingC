@@ -8,7 +8,7 @@
 @optional
 
 - (BOOL) canDragItemAtIndexPath: (NSIndexPath *)path
-                      fromView: (UICollectionView *)view;
+                       fromView: (UICollectionView *)view;
 
 - (void) dragBeganFromView: (UICollectionView *)view
                atIndexPath: (NSIndexPath *)path;
