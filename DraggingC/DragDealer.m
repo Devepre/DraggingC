@@ -181,6 +181,13 @@
             if (currentCollectionReceiver != self.draggingFromCollectionView) {
                 CGPoint pointInReceiver = [sender locationInView:currentCollectionReceiver];
                 NSIndexPath *currentReceiverIndexPath = [currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
+                
+                if (!currentReceiverIndexPath) { //dragged to outside of any index - add to the end
+                    NSInteger lastSection = [currentCollectionReceiver numberOfSections] - 1;
+                    NSInteger lastItem = [currentCollectionReceiver numberOfItemsInSection:lastSection];
+                    currentReceiverIndexPath = [NSIndexPath indexPathForItem:lastItem inSection:lastSection];
+                }
+                
                 if (self.delegate && [self.delegate respondsToSelector:@selector(draggedFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) {
                     [self.delegate draggedFromCollectionView:self.draggingFromCollectionView
                                                  atIndexPath:self.draggingFromContainerIndexPath
