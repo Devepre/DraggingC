@@ -71,6 +71,29 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
     return cell;
 }
 
+#pragma mark - <DragDealerProtocol>
+
+- (BOOL) canDragItemAtIndexPath: (NSIndexPath *)path
+                       fromView: (UICollectionView *)view {
+    if (path.item == 0) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (void) dragBeganFromView: (UICollectionView *)view
+               atIndexPath: (NSIndexPath *)path {
+    
+}
+
+- (void) draggedFromCollectionView: (UICollectionView *)fromView
+                       atIndexPath: (NSIndexPath *)indexFrom
+                  toCollectionView: (UICollectionView *)toView
+                       atIndexPath: (NSIndexPath *)indexTo {
+    
+}
+
 #pragma mark - Touches & Gestures
 
 #pragma mark - Additional methods
