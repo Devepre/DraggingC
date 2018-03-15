@@ -12,6 +12,14 @@
 @property (assign, nonatomic) CGPoint initialDraggingViewCenter;
 @property (assign, nonatomic) CGPoint deltaVector;
 @property (assign, nonatomic) CGPoint initialGlobalPoint;
+@property (assign, nonatomic) BOOL gotToReceiver;
+@property (assign, nonatomic) BOOL leaveFromReceiver;
+@property (strong, nonatomic) UICollectionView *currentCollectionReceiver;
+@property (strong, nonatomic) UICollectionView *oldCollectionReceiver;
+
+@property (strong, nonatomic) NSIndexPath *overridingIndexPath;
+@property (strong, nonatomic) NSIndexPath *oldOverridingIndexPath;
+@property (assign, nonatomic) BOOL itemWasDropped;
 
 @end
 
@@ -86,9 +94,9 @@
     
     if (self.draggingView) {
         //delegate methods to handle datasource
-        if (self.delegate && [self.delegate respondsToSelector:@selector(canDragItemAtIndexPath:fromView:)]) {
-            BOOL canDrag = [self.delegate canDragItemAtIndexPath:self.draggingFromContainerIndexPath
-                                                        fromView:self.draggingFromCollectionView];
+        if (self.delegate && [self.delegate respondsToSelector:@selector(canDragItemFromView:atIndexPath:)]) {
+            BOOL canDrag = [self.delegate canDragItemFromView:self.draggingFromCollectionView
+                                                  atIndexPath:self.draggingFromContainerIndexPath];
             if (canDrag) {
                 [self performDragBegan:&touchPointGlobal];
             } else { //delegate doesn't allow to drag this view
@@ -133,44 +141,77 @@
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     self.draggingView.center = CGPointMake(touchPointGlobal.x + self.deltaVector.x, touchPointGlobal.y + self.deltaVector.y);
     
-    UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
-    BOOL isInOtherCollection = self.draggingFromCollectionView != currentCollectionReceiver;
+    if (self.currentCollectionReceiver && self.currentCollectionReceiver != [self getDraggedCollectionViewFromBasePoint:self.draggingView.center]) {
+        self.oldCollectionReceiver = self.currentCollectionReceiver;
+    } else {
+        self.oldCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
+    }
+    self.currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
+    BOOL isInOtherCollection = self.draggingFromCollectionView != self.currentCollectionReceiver;
     
     if (isInOtherCollection) {
-        CGPoint pointInReceiver = [sender locationInView:currentCollectionReceiver];
-        NSIndexPath *overridingIndexPath = [currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
-        if (overridingIndexPath) {
-            NSInteger indexInReceiver = overridingIndexPath.row;
-            printf("will add to %ld\n", (long)indexInReceiver);
-            //TODO data and View update
+        //        printf("Is in other collection\n");
+        CGPoint pointInReceiver = [sender locationInView:self.currentCollectionReceiver];
+        self.overridingIndexPath = [self.currentCollectionReceiver indexPathForItemAtPoint:pointInReceiver];
+        if (self.overridingIndexPath) {
+            self.oldOverridingIndexPath = self.overridingIndexPath;
+            //            printf("inside bottom and index = %ld\n", (long)indexInReceiver.item);
+            if (!self.gotToReceiver) {
+                self.gotToReceiver = YES;
+                
+                printf("GOT TO RECEIVER\n");
+                if (self.delegate && [self.delegate respondsToSelector:@selector(dropCopyObjectFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) {
+                    [self.delegate dropCopyObjectFromCollectionView:self.draggingFromCollectionView
+                                                    atIndexPath:self.draggingFromContainerIndexPath
+                                               toCollectionView:self.currentCollectionReceiver
+                                                    atIndexPath:self.overridingIndexPath];
+                    //                [self.choosedTagsData insertObject:[self.tagsData objectAtIndex:index] atIndex:indexInBottom];
+                    self.itemWasDropped = YES;
+                    
+                    printf("Insert at IndexPath: %ld\n", self.overridingIndexPath.item);
+                    [self.currentCollectionReceiver insertItemsAtIndexPaths:@[self.overridingIndexPath]];
+                    [self.currentCollectionReceiver cellForItemAtIndexPath:self.overridingIndexPath].hidden = YES;
+                    [self.currentCollectionReceiver reloadData];
+                }
+                [self.currentCollectionReceiver beginInteractiveMovementForItemAtIndexPath:self.overridingIndexPath];
+            } else {
+                
+            }
+            // else continue interactive movement
+            [self.currentCollectionReceiver updateInteractiveMovementTargetPosition:[sender locationInView:self.destinationView]];
+            ///////
+        } else { // not overriding indexPath == check if leave
+//            UICollectionView *temp = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
+//            if (self.gotToReceiver && temp != self.oldCollectionReceiver) {
+            if (self.gotToReceiver) {
+                printf("LEAVING from IndexPath\n");
+                self.leaveFromReceiver = YES;
+                self.gotToReceiver = NO;
+                
+                [self.oldCollectionReceiver endInteractiveMovement];
+                
+                if (self.delegate && [self.delegate respondsToSelector:@selector(deleteObjectFromCollectionView:atIndexPath:)]) {
+                    self.itemWasDropped = NO;
+                    printf("IndexPath: %ld\n", (long)self.oldOverridingIndexPath.item);
+                    printf("send DELETE to delegate with prev indexpath\n");
+                    printf("current old collection receiver: %ld\n", self.oldCollectionReceiver.tag);
+                    [self.delegate deleteObjectFromCollectionView:self.oldCollectionReceiver
+                                                      atIndexPath:self.oldOverridingIndexPath];
+                    printf("\nONE\n");
+                    [self.oldCollectionReceiver cellForItemAtIndexPath:self.oldOverridingIndexPath].hidden = NO;
+                    [self.oldCollectionReceiver deleteItemsAtIndexPaths:@[self.oldOverridingIndexPath]];
+                    printf("\nTWO\n");
+                }
+            }
         }
     }
     
-    /*
-     if ([self isPoint:draggingView.center fromView:baseView isInsideView:self.destinationView]) {
-     NSIndexPath *selectedIndexPath = [self.destinationView indexPathForItemAtPoint:[sender locationInView:self.destinationView]];
-     if(selectedIndexPath) {
-     printf("inside bottom and index = %ld\n", (long)selectedIndexPath.row);
-     indexInBottom = (int)selectedIndexPath.row;
-     if (!gotToReceiver) {
-     gotToReceiver = YES;
-     
-     printf("GOT TO RECEIVER\n");
-     [self.choosedTagsData insertObject:[self.tagsData objectAtIndex:index] atIndex:indexInBottom];
-     [self.destinationView insertItemsAtIndexPaths:@[selectedIndexPath]];
-     //                            [self.collectionViewBottom reloadData];
-     
-     [self.destinationView beginInteractiveMovementForItemAtIndexPath:selectedIndexPath];
-     }
-     }
-     }
-     [self.destinationView updateInteractiveMovementTargetPosition:[sender locationInView:self.destinationView]];*/
 }
 
 - (void)performDragFinishUsingGesture:(UIPanGestureRecognizer *)sender {
-    //TODO  View animation update
-    /*gotToReceiver = NO;
-     [self.destinationView endInteractiveMovement];*/
+    self.gotToReceiver = NO;
+    [self.currentCollectionReceiver cellForItemAtIndexPath:self.overridingIndexPath].hidden = NO;
+    [self.currentCollectionReceiver endInteractiveMovement];
     
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     
@@ -188,11 +229,20 @@
                     currentReceiverIndexPath = [NSIndexPath indexPathForItem:lastItem inSection:lastSection];
                 }
                 
-                if (self.delegate && [self.delegate respondsToSelector:@selector(draggedFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) {
-                    [self.delegate draggedFromCollectionView:self.draggingFromCollectionView
-                                                 atIndexPath:self.draggingFromContainerIndexPath
-                                            toCollectionView:currentCollectionReceiver
-                                                 atIndexPath:currentReceiverIndexPath];
+                printf("index path during END of drag is: %ld", (long)currentReceiverIndexPath.item);
+                
+                if (self.delegate) {
+                    if (self.itemWasDropped && [self.delegate respondsToSelector:@selector(deleteObjectFromCollectionView:atIndexPath:)]) {
+//                        currentCollectionReceiver = nil; //hack
+                        [self.delegate deleteObjectFromCollectionView:self.draggingFromCollectionView
+                                                          atIndexPath:self.draggingFromContainerIndexPath];
+                    } else if ([self.delegate respondsToSelector:@selector(draggedFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) { //item was not dropped already
+                        [self.delegate draggedFromCollectionView:self.draggingFromCollectionView
+                                                     atIndexPath:self.draggingFromContainerIndexPath
+                                                toCollectionView:currentCollectionReceiver
+                                                     atIndexPath:currentReceiverIndexPath];
+                    }
+                    
                 }
                 //assume data was changed by delegate
                 [self.sourceView reloadData];
@@ -220,17 +270,6 @@
         }
     }
 }
-
-#pragma mark - Data Source Handling
-////TODO reordering data logic is here
-//- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
-//    NSLog(@"\nchanged \n%@", self.choosedTagsData);
-//    NSLog(@"Source: %@ Destination: %@", sourceIndexPath, destinationIndexPath);
-//
-//    NSLog(@"\nchanged \n%@", self.choosedTagsData);
-//    [self.destinationView reloadData];
-//
-//}
 
 #pragma mark - Additional methods
 
@@ -283,14 +322,14 @@
 - (void)undoDraggingFromInvalidSourceToGlobalPoint: (CGPoint)initialGlobalPoint withDeltaPoint: (CGPoint)deltaVector {
     printf("undo from invalid\n");
     CGPoint newGlobalCenter = CGPointMake(initialGlobalPoint.x + deltaVector.x, initialGlobalPoint.y + deltaVector.y);
-
+    
     void (^discardDragProcess)(BOOL finished) = ^ (BOOL finished) {
         [self.draggingView removeFromSuperview];
-
+        
         //adding CellView back to Sender
         CGPoint newCenter = [self.baseView convertPoint:self.draggingView.center toView:self.draggingFromCollectionView];
         self.draggingView.center = newCenter;
-
+        
         [self.draggingFromCollectionView addSubview:self.draggingView];
         [self finalizeDragProcess];
     };
@@ -303,9 +342,10 @@
     if (self.isSacled) {
         [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
     } else {
-        #pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wunused-value"
         discardDragProcess;
     }
 }
 
 @end
+

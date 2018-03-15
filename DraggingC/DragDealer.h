@@ -1,14 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-//@class UIGestureRecognizer;
-//@class UIView;
 
 @protocol DragDealerProtocol
 
-@optional
+@required
 
-- (BOOL) canDragItemAtIndexPath: (NSIndexPath *)path
-                       fromView: (UICollectionView *)view;
+- (BOOL) canDragItemFromView: (UICollectionView *)view
+                 atIndexPath: (NSIndexPath *)path;
 
 - (void) dragBeganFromView: (UICollectionView *)view
                atIndexPath: (NSIndexPath *)path;
@@ -17,6 +15,14 @@
                        atIndexPath: (NSIndexPath *)indexFrom
                   toCollectionView: (UICollectionView *)toView
                        atIndexPath: (NSIndexPath *)indexTo;
+
+- (void) dropCopyObjectFromCollectionView: (UICollectionView *)fromView
+                              atIndexPath: (NSIndexPath *)indexFrom
+                         toCollectionView: (UICollectionView *)toView
+                              atIndexPath: (NSIndexPath *)indexTo;
+
+- (void) deleteObjectFromCollectionView: (UICollectionView *) fromView
+                            atIndexPath: (NSIndexPath *)indexFrom;
 
 @end
 
@@ -37,3 +43,4 @@
                      andDelegate: (NSObject<DragDealerProtocol> *)delegate NS_DESIGNATED_INITIALIZER;
 
 @end
+
