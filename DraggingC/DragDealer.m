@@ -8,7 +8,6 @@
 @property (strong, nonatomic) UICollectionViewCell *draggingView;
 @property (assign, nonatomic) NSIndexPath *draggingFromContainerIndexPath;
 
-// from static
 @property (assign, nonatomic) CGPoint initialDraggingViewCenter;
 @property (assign, nonatomic) CGPoint deltaVector;
 @property (assign, nonatomic) CGPoint initialGlobalPoint;
@@ -48,8 +47,6 @@
         [_baseView addGestureRecognizer:panGesture];
         
         // default usage
-        _sourceReceivable = YES;
-        _destinationReceivable = YES;
         _scaled = YES;
         
     }
@@ -85,6 +82,7 @@
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     
     if (!self.draggingView) {
+        printf("not dragging view exist\n");
         self.draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
         CGPoint draggingPoint = [self.baseView convertPoint:touchPointGlobal
                                                      toView:self.draggingFromCollectionView];
@@ -129,6 +127,7 @@
     
     //adding to temp field
     self.draggingView.center = CGPointMake(touchPointGlobal->x + self.deltaVector.x, touchPointGlobal->y + self.deltaVector.y);
+    printf("adding to temp field\n");
     [self.fieldView addSubview:self.draggingView];
     
     if (self.isSacled) { //begin animation
@@ -215,6 +214,8 @@
     
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     
+    //TODO: TODO coordinate for last item from Source view is wrong
+    
     if (self.fieldView) {
         UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
         
@@ -229,7 +230,7 @@
                     currentReceiverIndexPath = [NSIndexPath indexPathForItem:lastItem inSection:lastSection];
                 }
                 
-                printf("index path during END of drag is: %ld", (long)currentReceiverIndexPath.item);
+                printf("index path during END of drag is: %ld\n", (long)currentReceiverIndexPath.item);
                 
                 if (self.delegate) {
                     if (self.itemWasDropped && [self.delegate respondsToSelector:@selector(deleteObjectFromCollectionView:atIndexPath:)]) {
@@ -302,7 +303,6 @@
 }
 
 - (void)undoDraggingFromBasePoint: (CGPoint)touchPointGlobal withDeltaPoint: (CGPoint)deltaVector toInitialCenterPoint: (CGPoint)initialDraggingViewCenter {
-    //TODO HERE ANIMATION OF FIELDVIEW!
     [self.draggingView removeFromSuperview];
     
     //adding CellView back to Sender
