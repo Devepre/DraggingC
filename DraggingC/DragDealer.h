@@ -39,7 +39,8 @@
 - (instancetype)initWithBaseView: (UIView *)baseView
                    andSourceView: (UICollectionView *)sourceView
               andDestinationView: (UICollectionView *)destinationView
-                     andDelegate: (NSObject<DragDealerProtocol> *)delegate NS_DESIGNATED_INITIALIZER;
+                     andDelegate: (NSObject<DragDealerProtocol> *)delegate
+             andLongPressEnabled: (BOOL)longPressEnabled NS_DESIGNATED_INITIALIZER;
 
 @end
 

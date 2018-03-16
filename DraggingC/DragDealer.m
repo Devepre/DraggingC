@@ -25,14 +25,15 @@
 @implementation DragDealer
 
 - (instancetype)init {
-    self = [self initWithBaseView:nil andSourceView:nil andDestinationView:nil andDelegate:nil];
+    self = [self initWithBaseView:nil andSourceView:nil andDestinationView:nil andDelegate:nil andLongPressEnabled:NO];
     return self;
 }
 
 - (instancetype)initWithBaseView: (UIView *)baseView
                    andSourceView: (UICollectionView *)sourceView
               andDestinationView: (UICollectionView *)destinationView
-                     andDelegate: (NSObject<DragDealerProtocol> *)delegate {
+                     andDelegate: (NSObject<DragDealerProtocol> *)delegate
+             andLongPressEnabled: (BOOL)longPressEnabled {
     self = [super init];
     if (self) {
         _baseView = baseView;
@@ -41,10 +42,19 @@
         _delegate = delegate;
         
         //gesture creation
-        UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self
-                                                                                     action:@selector(handlePan:)];
-        panGesture.delegate = self;
-        [_baseView addGestureRecognizer:panGesture];
+        if (longPressEnabled) {
+            NSLog(@"Long");
+            UILongPressGestureRecognizer *longGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                                     action:@selector(handlePan:)];
+            longGesture.delegate = self;
+            [_baseView addGestureRecognizer:longGesture];
+        } else {
+            NSLog(@"Pan");
+            UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self
+                                                                                         action:@selector(handlePan:)];
+            panGesture.delegate = self;
+            [_baseView addGestureRecognizer:panGesture];
+        }
         
         // default usage
         _scaled = YES;
@@ -59,7 +69,8 @@
     return self.simultaneouslyScrollAndDragAllowed;
 }
 
-- (void)handlePan:(UIPanGestureRecognizer *)sender {
+//- (void)handlePan:(UIPanGestureRecognizer *)sender {
+- (void)handlePan:(UIGestureRecognizer *)sender {
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
             [self performDragVeryBeginningUsingGesture:sender];
@@ -84,7 +95,7 @@
 
 #pragma mark - Dragging Gestures Handling
 
-- (void)performDragVeryBeginningUsingGesture: (UIPanGestureRecognizer *)sender {
+- (void)performDragVeryBeginningUsingGesture: (UIGestureRecognizer *)sender {
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     
     if (!self.draggingView) {
@@ -145,7 +156,7 @@
     }
 }
 
-- (void)performDraggingUsingGesture:(UIPanGestureRecognizer *)sender {
+- (void)performDraggingUsingGesture:(UIGestureRecognizer *)sender {
     //moving object itself
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     self.draggingView.center = CGPointMake(touchPointGlobal.x + self.deltaVector.x, touchPointGlobal.y + self.deltaVector.y);
@@ -157,7 +168,7 @@
     }
     self.currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
     BOOL isInOtherCollection = self.draggingFromCollectionView != self.currentCollectionReceiver;
-    printf("Current Receiver Tag: %ld\n", self.currentCollectionReceiver.tag);
+    printf("Current Receiver Tag: %ld\n", (long)self.currentCollectionReceiver.tag);
     printf("is in other collection: %s\n", isInOtherCollection ? "yes" : "no");
     UILabel *temp = (UILabel *)[[self.draggingView.subviews objectAtIndex:0].subviews objectAtIndex:0];
     printf("%s\n", [temp.text UTF8String]);
@@ -182,7 +193,7 @@
                     //                [self.choosedTagsData insertObject:[self.tagsData objectAtIndex:index] atIndex:indexInBottom];
                     self.itemWasDropped = YES;
                     
-                    printf("Insert at IndexPath: %ld\n", self.overridingIndexPath.item);
+                    printf("Insert at IndexPath: %ld\n", (long)self.overridingIndexPath.item);
                     [self.currentCollectionReceiver insertItemsAtIndexPaths:@[self.overridingIndexPath]];
                     [self.currentCollectionReceiver cellForItemAtIndexPath:self.overridingIndexPath].hidden = YES;
 //                    [self.currentCollectionReceiver reloadData];
@@ -208,7 +219,7 @@
                     self.itemWasDropped = NO;
                     printf("IndexPath: %ld\n", (long)self.oldOverridingIndexPath.item);
                     printf("send DELETE to delegate with prev indexpath\n");
-                    printf("current old collection receiver: %ld\n", self.oldCollectionReceiver.tag);
+                    printf("current old collection receiver: %ld\n", (long)self.oldCollectionReceiver.tag);
                     [self.delegate deleteObjectFromCollectionView:self.oldCollectionReceiver
                                                       atIndexPath:self.oldOverridingIndexPath];
                     printf("\nONE\n");
@@ -222,7 +233,7 @@
     
 }
 
-- (void)performDragFinishUsingGesture:(UIPanGestureRecognizer *)sender {
+- (void)performDragFinishUsingGesture:(UIGestureRecognizer *)sender {
     self.gotToReceiver = NO;
     [self.currentCollectionReceiver cellForItemAtIndexPath:self.overridingIndexPath].hidden = NO;
     [self.currentCollectionReceiver endInteractiveMovement];

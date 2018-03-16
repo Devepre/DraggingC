@@ -27,9 +27,10 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
     _dragDealer = [[DragDealer alloc] initWithBaseView: _backgroundView
                                          andSourceView:_collectionViewTop
                                     andDestinationView:_collectionViewBottom
-                                           andDelegate:self];
+                                           andDelegate:self
+                                   andLongPressEnabled:YES];
     _dragDealer.scaled = YES;
-    _dragDealer.simultaneouslyScrollAndDragAllowed = YES;
+    _dragDealer.simultaneouslyScrollAndDragAllowed = NO;
 }
 
 #pragma mark <UICollectionViewDataSource>
