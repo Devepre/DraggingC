@@ -82,7 +82,7 @@
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
     
     if (!self.draggingView) {
-        printf("not dragging view exist\n");
+//        printf("not dragging view exist\n");
         self.draggingFromCollectionView = [self getDraggedCollectionViewFromBasePoint:touchPointGlobal];
         CGPoint draggingPoint = [self.baseView convertPoint:touchPointGlobal
                                                      toView:self.draggingFromCollectionView];
@@ -105,6 +105,10 @@
 }
 
 - (void)performDragBegan:(const CGPoint *)touchPointGlobal {
+    self.itemWasDropped = NO;
+    self.gotToReceiver = NO;
+    self.leaveFromReceiver = NO;
+    
     if ([self.delegate respondsToSelector:@selector(dragBeganFromView:atIndexPath:)]) {
         [self.delegate dragBeganFromView:self.draggingFromCollectionView
                              atIndexPath:self.draggingFromContainerIndexPath];
@@ -127,7 +131,7 @@
     
     //adding to temp field
     self.draggingView.center = CGPointMake(touchPointGlobal->x + self.deltaVector.x, touchPointGlobal->y + self.deltaVector.y);
-    printf("adding to temp field\n");
+//    printf("adding to temp field\n");
     [self.fieldView addSubview:self.draggingView];
     
     if (self.isSacled) { //begin animation
@@ -147,6 +151,11 @@
     }
     self.currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];
     BOOL isInOtherCollection = self.draggingFromCollectionView != self.currentCollectionReceiver;
+    printf("Current Receiver Tag: %ld\n", self.currentCollectionReceiver.tag);
+    printf("is in other collection: %s\n", isInOtherCollection ? "yes" : "no");
+    UILabel *temp = (UILabel *)[[self.draggingView.subviews objectAtIndex:0].subviews objectAtIndex:0];
+    printf("%s\n", [temp.text UTF8String]);
+    
     
     if (isInOtherCollection) {
         //        printf("Is in other collection\n");
@@ -170,7 +179,7 @@
                     printf("Insert at IndexPath: %ld\n", self.overridingIndexPath.item);
                     [self.currentCollectionReceiver insertItemsAtIndexPaths:@[self.overridingIndexPath]];
                     [self.currentCollectionReceiver cellForItemAtIndexPath:self.overridingIndexPath].hidden = YES;
-                    [self.currentCollectionReceiver reloadData];
+//                    [self.currentCollectionReceiver reloadData];
                 }
                 [self.currentCollectionReceiver beginInteractiveMovementForItemAtIndexPath:self.overridingIndexPath];
             } else {
@@ -234,22 +243,28 @@
                 
                 if (self.delegate) {
                     if (self.itemWasDropped && [self.delegate respondsToSelector:@selector(deleteObjectFromCollectionView:atIndexPath:)]) {
+                        printf("item was already dropped\n");
 //                        currentCollectionReceiver = nil; //hack
                         [self.delegate deleteObjectFromCollectionView:self.draggingFromCollectionView
                                                           atIndexPath:self.draggingFromContainerIndexPath];
+                        [self.draggingFromCollectionView deleteItemsAtIndexPaths:@[self.draggingFromContainerIndexPath]];
                     } else if ([self.delegate respondsToSelector:@selector(draggedFromCollectionView:atIndexPath:toCollectionView:atIndexPath:)]) { //item was not dropped already
                         [self.delegate draggedFromCollectionView:self.draggingFromCollectionView
                                                      atIndexPath:self.draggingFromContainerIndexPath
                                                 toCollectionView:currentCollectionReceiver
                                                      atIndexPath:currentReceiverIndexPath];
+                        [self.draggingFromCollectionView deleteItemsAtIndexPaths:@[self.draggingFromContainerIndexPath]];
+                        [currentCollectionReceiver insertItemsAtIndexPaths:@[currentReceiverIndexPath]];
                     }
                     
                 }
-                //assume data was changed by delegate
-                [self.sourceView reloadData];
-                [self.destinationView reloadData];
-                
                 [self.draggingView removeFromSuperview];
+                
+                //assume data was changed by delegate
+//                [self.sourceView reloadData];
+//                [self.destinationView reloadData];
+                
+                /*[self.draggingView removeFromSuperview];
                 //adding CellView to Receiver
                 CGPoint newCenter = [self.baseView convertPoint:touchPointGlobal toView:currentCollectionReceiver];
                 CGPoint newCenterWithDelta = CGPointMake(newCenter.x + self.deltaVector.x, newCenter.y + self.deltaVector.y);
@@ -259,6 +274,8 @@
                 if (self.isSacled) {
                     [UIView animateWithDuration:.3f animations:^{ self.draggingView.transform = CGAffineTransformMakeScale(1.f, 1.f);}];
                 }
+                [self finalizeDragProcess]; */
+                
                 [self finalizeDragProcess];
             } else { //ReceiverView == SenderView
                 [self undoDraggingFromBasePoint:touchPointGlobal
