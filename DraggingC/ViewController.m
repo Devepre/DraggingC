@@ -15,14 +15,21 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _tagsData = [[NSMutableArray alloc] initWithObjects:@"StringOne", @"StringTwo", @"StringThree", nil];
-    _choosedTagsData = [[NSMutableArray alloc] initWithObjects:@"bla-blah", @"anotherOne", nil];
+//    _tagsData = [[NSMutableArray alloc] initWithObjects:@"StringOne", @"StringTwo", nil];
+//    _choosedTagsData = [[NSMutableArray alloc] initWithObjects:@"bla-blah", @"anotherOne", nil];
+    _choosedTagsData = [[NSMutableArray alloc] init];
+    
+    _tagsData = [[NSMutableArray alloc]init];
+    for (int i = 0; i < 100; i++) {
+        [_tagsData addObject:[NSString stringWithFormat:@"String%d", i]];
+    }
     
     _dragDealer = [[DragDealer alloc] initWithBaseView: _backgroundView
                                          andSourceView:_collectionViewTop
                                     andDestinationView:_collectionViewBottom
                                            andDelegate:self];
     _dragDealer.scaled = YES;
+    _dragDealer.simultaneouslyScrollAndDragAllowed = YES;
 }
 
 #pragma mark <UICollectionViewDataSource>
@@ -75,17 +82,17 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
 
 - (BOOL) canDragItemFromView:(UICollectionView *)view
                  atIndexPath:(NSIndexPath *)path {
-        if (path.item == 0) {
-            printf("I don't allow to drag from %ld view at index %ld\n", view.tag, path.item);
-            return NO;
-        }
+//        if (path.item == 1) {
+//            printf("I don't allow to drag from %ld view at index %ld\n", view.tag, path.item);
+//            return NO;
+//        }
     
     return YES;
 }
 
 - (void)dragBeganFromView: (UICollectionView *)view
               atIndexPath: (NSIndexPath *)path {
-    printf("<VC> Begin dragging from view tagged as %ld at index %ld\n", (long)view.tag, (long)path.item);
+//    printf("<VC> Begin dragging from view tagged as %ld at index %ld\n", (long)view.tag, (long)path.item);
 }
 
 - (void)draggedFromCollectionView: (UICollectionView *)fromView

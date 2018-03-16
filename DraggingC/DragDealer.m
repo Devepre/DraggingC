@@ -53,6 +53,12 @@
     return self;
 }
 
+#pragma mark - Gestures
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return self.simultaneouslyScrollAndDragAllowed;
+}
+
 - (void)handlePan:(UIPanGestureRecognizer *)sender {
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
@@ -222,8 +228,6 @@
     [self.currentCollectionReceiver endInteractiveMovement];
     
     CGPoint touchPointGlobal = [sender locationInView:self.baseView];
-    
-    //TODO: TODO coordinate for last item from Source view is wrong
     
     if (self.fieldView) {
         UICollectionView *currentCollectionReceiver = [self getDraggedCollectionViewFromBasePoint:self.draggingView.center];

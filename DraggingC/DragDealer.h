@@ -34,6 +34,7 @@
 @property (weak, nonatomic) NSObject<DragDealerProtocol> *delegate;
 
 @property (assign, nonatomic, getter=isSacled) BOOL scaled;
+@property (assign, nonatomic, getter=isSimulatniouslyScrollAndDragAllowed) BOOL simultaneouslyScrollAndDragAllowed;
 
 - (instancetype)initWithBaseView: (UIView *)baseView
                    andSourceView: (UICollectionView *)sourceView
