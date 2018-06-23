@@ -18,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		24DE484320DE59A00074311C /* DragDealerProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DragDealerProtocol.h; sourceTree = "<group>"; };
 		CEC9386E2057C3300007CBDA /* DragDealer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DragDealer.h; sourceTree = "<group>"; };
 		CEC9386F2057C3300007CBDA /* DragDealer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DragDealer.m; sourceTree = "<group>"; };
 		CEE12AB3204EC55000807FCF /* DraggingC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DraggingC.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,8 +65,11 @@
 		CEE12AB5204EC55000807FCF /* DraggingC */ = {
 			isa = PBXGroup;
 			children = (
+				24DE484320DE59A00074311C /* DragDealerProtocol.h */,
 				CEC9386E2057C3300007CBDA /* DragDealer.h */,
 				CEC9386F2057C3300007CBDA /* DragDealer.m */,
+				CEE12ACF204EEA3700807FCF /* UIView+DragAndDrop.h */,
+				CEE12AD0204EEA3700807FCF /* UIView+DragAndDrop.m */,
 				CEE12AB9204EC55000807FCF /* ViewController.h */,
 				CEE12ABA204EC55000807FCF /* ViewController.m */,
 				CEE12ABC204EC55000807FCF /* Main.storyboard */,
@@ -75,8 +79,6 @@
 				CEE12AC5204EC55000807FCF /* main.m */,
 				CEE12AB6204EC55000807FCF /* AppDelegate.h */,
 				CEE12AB7204EC55000807FCF /* AppDelegate.m */,
-				CEE12ACF204EEA3700807FCF /* UIView+DragAndDrop.h */,
-				CEE12AD0204EEA3700807FCF /* UIView+DragAndDrop.m */,
 			);
 			path = DraggingC;
 			sourceTree = "<group>";
@@ -291,9 +293,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3MKUUZEFBH;
+				DEVELOPMENT_TEAM = G42Q9LTDRN;
 				INFOPLIST_FILE = DraggingC/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.del.some.DraggingC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -306,9 +308,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3MKUUZEFBH;
+				DEVELOPMENT_TEAM = G42Q9LTDRN;
 				INFOPLIST_FILE = DraggingC/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.del.some.DraggingC;
 				PRODUCT_NAME = "$(TARGET_NAME)";

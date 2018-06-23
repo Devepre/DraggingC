@@ -1,5 +1,4 @@
 #import "ViewController.h"
-#import "UIView+DragAndDrop.h"
 
 @interface ViewController ()
 
@@ -25,10 +24,10 @@ static NSString * const reuseIdentifier2 = @"CellCollected";
     }
     
     _dragDealer = [[DragDealer alloc] initWithBaseView: _backgroundView
-                                         andSourceView:_collectionViewTop
-                                    andDestinationView:_collectionViewBottom
-                                           andDelegate:self
-                                   andLongPressEnabled:YES];
+                                         sourceView:_collectionViewTop
+                                    destinationView:_collectionViewBottom
+                                           delegate:self
+                                   longPressEnabled:YES];
     _dragDealer.scaled = YES;
     _dragDealer.simultaneouslyScrollAndDragAllowed = NO;
 }

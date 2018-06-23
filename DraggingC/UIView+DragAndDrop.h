@@ -2,9 +2,9 @@
 
 @interface UIView (DragAndDrop)
 
-@property (assign, getter=isDragable) BOOL dragable;
+@property (assign, getter=isDragable) BOOL   dragable;
 @property (assign, getter=isReceivable) BOOL receivable;
 
-- (NSMutableArray*) allSubViews;
+- (NSMutableArray *) allSubViews;
 
 @end

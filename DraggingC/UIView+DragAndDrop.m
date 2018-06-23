@@ -27,10 +27,10 @@ static void * DragAndDropReceivablePropertyKey = &DragAndDropReceivablePropertyK
 }
 
 - (NSMutableArray*)allSubViews {
-    NSMutableArray *arr=[[NSMutableArray alloc] init];
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
     [arr addObject:self];
     for (UIView *subview in self.subviews) {
-        [arr addObjectsFromArray:(NSArray*)[subview allSubViews]];
+        [arr addObjectsFromArray:(NSArray *)[subview allSubViews]];
     }
     return arr;
 }
